@@ -1,0 +1,169 @@
+[gd_scene load_steps=9 format=3 uid="uid://camdrlaxyj4rd"]
+
+[ext_resource type="Script" path="res://Agent.gd" id="1_jtk1t"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lsufn"]
+radius = 36.0
+height = 98.0
+
+[sub_resource type="GDScript" id="GDScript_if8fo"]
+script/source = "extends Node
+
+@export var default_state_name = \"None\"
+
+var currentState : StateBase
+var stateDict := {}
+
+func _ready():
+	for child in get_children():
+		if child is StateBase:
+			stateDict[child.name] = child
+	
+	change_to_state(default_state_name)
+	
+func _physics_process(delta):
+	if currentState:
+		currentState._state_physics_process(delta)
+		
+	process_transition()
+		
+func _process(delta):
+	if currentState:
+		currentState._state_process(delta)
+		
+	process_transition()
+		
+func process_transition():
+	for state_name in stateDict.keys():
+		if can_transition_to(state_name):
+			change_to_state(state_name)
+			return
+		
+func can_transition_to(state_name) -> bool:
+	if currentState:
+		return currentState._can_transition_to(state_name)
+	else:
+		return false
+
+func change_to_state(state_name):
+	if stateDict.has(state_name):
+		if currentState:
+			currentState._state_exit()
+			
+		currentState = stateDict[state_name]
+		currentState._state_enter()
+	else:
+		assert(false, \"State %s doesn't exist\" % [state_name])
+"
+
+[sub_resource type="GDScript" id="GDScript_bg5aa"]
+script/source = "extends StateBase
+"
+
+[sub_resource type="GDScript" id="GDScript_svocx"]
+script/source = "extends StateBase
+
+@export var speed : float = 500
+
+@onready var characterBody : CharacterBody2D = $\"../..\"
+
+func _state_enter():
+	pass
+	
+func _state_physics_process(delta):
+	var direction = Input.get_axis(\"move_left\", \"move_right\")
+	
+	if direction:
+		characterBody.velocity.x = direction * speed
+	else:
+		characterBody.velocity.x = move_toward(characterBody.velocity.x, 0, speed)
+		
+	characterBody.move_and_slide()
+	
+func _state_exit():
+	pass
+	
+func _can_transition_to(stateName) -> bool:
+	if stateName == \"Jump1\":
+		return Input.is_action_just_pressed(\"jump\")
+		
+	if stateName == \"Air\":
+		return not characterBody.is_on_floor()
+		
+	return false;
+"
+
+[sub_resource type="GDScript" id="GDScript_s487l"]
+script/source = "extends StateBase
+
+@export var jump_velocity := -1000
+
+@onready var characterBody : CharacterBody2D = $\"../..\"
+
+func _state_enter():
+	characterBody.velocity.y = jump_velocity
+	
+func _can_transition_to(state_name) -> bool:
+	if state_name == \"Air\" :
+		return true
+	return false
+	
+"
+
+[sub_resource type="GDScript" id="GDScript_r6d7i"]
+script/source = "extends StateBase
+
+@export var gravity : float = ProjectSettings.get_setting(
+	\"physics/2d/default_gravity\")
+	
+@onready var characterBody : CharacterBody2D = $\"../..\"
+
+func _state_physics_process(delta):
+	if not characterBody.is_on_floor():
+		characterBody.velocity.y += gravity * delta
+	characterBody.move_and_slide()
+	
+func _can_transition_to(state_name) -> bool:
+	if state_name == \"Ground\":
+		return characterBody.is_on_floor()
+	return false
+"
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v3ixk"]
+size = Vector2(1040, 38)
+
+[node name="Node2D" type="Node2D"]
+
+[node name="CharacterBody2D" type="CharacterBody2D" parent="."]
+position = Vector2(604, 328)
+wall_min_slide_angle = 0.506145
+script = ExtResource("1_jtk1t")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
+shape = SubResource("CapsuleShape2D_lsufn")
+metadata/_edit_lock_ = true
+
+[node name="StateMachine" type="Node" parent="CharacterBody2D"]
+script = SubResource("GDScript_if8fo")
+default_state_name = "Ground"
+
+[node name="None" type="Node" parent="CharacterBody2D/StateMachine"]
+script = SubResource("GDScript_bg5aa")
+
+[node name="Ground" type="Node" parent="CharacterBody2D/StateMachine"]
+script = SubResource("GDScript_svocx")
+
+[node name="Jump1" type="Node" parent="CharacterBody2D/StateMachine"]
+script = SubResource("GDScript_s487l")
+
+[node name="Air" type="Node" parent="CharacterBody2D/StateMachine"]
+script = SubResource("GDScript_r6d7i")
+gravity = 5000.0
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+position = Vector2(604, 637)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_v3ixk")
+metadata/_edit_lock_ = true
