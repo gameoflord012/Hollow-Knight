@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://camdrlaxyj4rd"]
+[gd_scene load_steps=11 format=3 uid="uid://camdrlaxyj4rd"]
 
 [ext_resource type="Script" path="res://Agent.gd" id="1_jtk1t"]
 
@@ -6,57 +6,14 @@
 radius = 36.0
 height = 98.0
 
-[sub_resource type="GDScript" id="GDScript_if8fo"]
-script/source = "extends Node
+[sub_resource type="GDScript" id="GDScript_152o8"]
+script/source = "extends StateMachine
 
-@export var default_state_name = \"None\"
-
-var currentState : StateBase
-var stateDict := {}
-
-func _ready():
-	for child in get_children():
-		if child is StateBase:
-			stateDict[child.name] = child
-	
-	change_to_state(default_state_name)
-	
-func _physics_process(delta):
-	if currentState:
-		currentState._state_physics_process(delta)
-		
-	process_transition()
-		
-func _process(delta):
-	if currentState:
-		currentState._state_process(delta)
-		
-	process_transition()
-		
-func process_transition():
-	for state_name in stateDict.keys():
-		if can_transition_to(state_name):
-			change_to_state(state_name)
-			return
-		
-func can_transition_to(state_name) -> bool:
-	if currentState:
-		return currentState._can_transition_to(state_name)
-	else:
-		return false
-
-func change_to_state(state_name):
-	if stateDict.has(state_name):
-		if currentState:
-			currentState._state_exit()
-			
-		currentState = stateDict[state_name]
-		currentState._state_enter()
-	else:
-		assert(false, \"State %s doesn't exist\" % [state_name])
+func get_moving_axis():
+	return Input.get_axis(\"move_left\", \"move_right\")
 "
 
-[sub_resource type="GDScript" id="GDScript_bg5aa"]
+[sub_resource type="GDScript" id="GDScript_74t8p"]
 script/source = "extends StateBase
 "
 
@@ -71,7 +28,7 @@ func _state_enter():
 	pass
 	
 func _state_physics_process(delta):
-	var direction = Input.get_axis(\"move_left\", \"move_right\")
+	var direction = stateMachine.get_moving_axis()
 	
 	if direction:
 		characterBody.velocity.x = direction * speed
@@ -84,7 +41,7 @@ func _state_exit():
 	pass
 	
 func _can_transition_to(stateName) -> bool:
-	if stateName == \"Jump1\":
+	if stateName == \"Jump\":
 		return Input.is_action_just_pressed(\"jump\")
 		
 	if stateName == \"Air\":
@@ -110,22 +67,56 @@ func _can_transition_to(state_name) -> bool:
 	
 "
 
+[sub_resource type="GDScript" id="GDScript_bg5aa"]
+script/source = "extends StateBase
+
+@onready var jump = $\"../Jump\"
+
+func _state_enter():
+	jump._state_enter()
+	
+func _can_transition_to(state_name) -> bool:
+	if state_name == \"Air2\" :
+		return true
+	return false
+"
+
 [sub_resource type="GDScript" id="GDScript_r6d7i"]
 script/source = "extends StateBase
 
 @export var gravity : float = ProjectSettings.get_setting(
 	\"physics/2d/default_gravity\")
 	
+@export var horizontalVelocity : float = 1000
 @onready var characterBody : CharacterBody2D = $\"../..\"
 
 func _state_physics_process(delta):
 	if not characterBody.is_on_floor():
 		characterBody.velocity.y += gravity * delta
+		characterBody.velocity.x = stateMachine.get_moving_axis() * horizontalVelocity
+		
 	characterBody.move_and_slide()
 	
 func _can_transition_to(state_name) -> bool:
 	if state_name == \"Ground\":
 		return characterBody.is_on_floor()
+	elif state_name == \"Jump2\":
+		return Input.is_action_just_pressed(\"jump\")
+		
+	return false
+"
+
+[sub_resource type="GDScript" id="GDScript_o2lqo"]
+script/source = "extends StateBase
+
+@onready var air = $\"../Air\"
+
+func _state_physics_process(delta):
+	air._state_physics_process(delta)
+
+func _can_transition_to(stateName) -> bool:
+	if(stateName != \"Jump2\"):
+		return air._can_transition_to(stateName)
 	return false
 "
 
@@ -144,21 +135,27 @@ shape = SubResource("CapsuleShape2D_lsufn")
 metadata/_edit_lock_ = true
 
 [node name="StateMachine" type="Node" parent="CharacterBody2D"]
-script = SubResource("GDScript_if8fo")
+script = SubResource("GDScript_152o8")
 default_state_name = "Ground"
 
 [node name="None" type="Node" parent="CharacterBody2D/StateMachine"]
-script = SubResource("GDScript_bg5aa")
+script = SubResource("GDScript_74t8p")
 
 [node name="Ground" type="Node" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_svocx")
 
-[node name="Jump1" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="Jump" type="Node" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_s487l")
+
+[node name="Jump2" type="Node" parent="CharacterBody2D/StateMachine"]
+script = SubResource("GDScript_bg5aa")
 
 [node name="Air" type="Node" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_r6d7i")
 gravity = 5000.0
+
+[node name="Air2" type="Node" parent="CharacterBody2D/StateMachine"]
+script = SubResource("GDScript_o2lqo")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 position = Vector2(604, 637)

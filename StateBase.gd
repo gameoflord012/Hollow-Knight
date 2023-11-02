@@ -2,6 +2,8 @@ extends Node
 
 class_name StateBase
 
+var stateMachine
+
 func _state_enter():
 	pass
 
