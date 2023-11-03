@@ -4,6 +4,10 @@ class_name StateBase
 
 var stateMachine
 
+func _enter_tree():
+	stateMachine = Find.node(self, StateMachine)
+	print(stateMachine)
+
 func _state_enter():
 	pass
 

@@ -40,6 +40,8 @@ func can_transition_to(state_name) -> bool:
 		return false
 
 func change_to_state(state_name):
+	print(state_name)
+	
 	if stateDict.has(state_name):
 		if currentState:
 			currentState._state_exit()
