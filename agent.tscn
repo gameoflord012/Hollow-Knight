@@ -1,6 +1,7 @@
-[gd_scene load_steps=12 format=3 uid="uid://camdrlaxyj4rd"]
+[gd_scene load_steps=13 format=3 uid="uid://camdrlaxyj4rd"]
 
 [ext_resource type="Script" path="res://Agent.gd" id="1_jtk1t"]
+[ext_resource type="Script" path="res://WallJump.gd" id="2_u4jb4"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lsufn"]
 radius = 36.0
@@ -101,17 +102,20 @@ func _state_physics_process(delta):
 	if not characterBody.is_on_floor():
 		characterBody.velocity.y += gravity * delta
 		characterBody.velocity.x = stateMachine.get_moving_axis() * horizontalVelocity
-		
+	
 	characterBody.move_and_slide()
 	
 func _can_transition_to(stateName) -> bool:
-	if stateName == \"Ground\":
-		return characterBody.is_on_floor()
-	elif stateName == \"Jump2\":
-		return Input.is_action_just_pressed(\"jump\")
-	elif stateName == \"WallSlide\":
-		return characterBody.is_on_wall()
+	match stateName:
+		\"Ground\":
+			return characterBody.is_on_floor()
+			
+		\"Jump2\":
+			return Input.is_action_just_pressed(\"jump\")
 		
+		\"WallSlide\":
+			return $\"../WallSlide\".is_hug_wall()
+				
 	return false
 "
 
@@ -132,8 +136,13 @@ func _can_transition_to(stateName) -> bool:
 [sub_resource type="GDScript" id="GDScript_l231q"]
 script/source = "extends StateBase
 
-@export var fallingVelocity : float = 500
+@export var fallingVelocity : float = 200
 var charBody : CharacterBody2D 
+var wallDistance : float = 100
+
+var isOnWall := false
+var isOnLeftWall := false
+var isOnRightWall := false
 
 func _ready(): 
 	charBody = stateMachine.characterBody2D
@@ -144,12 +153,33 @@ func _state_enter():
 func _state_physics_process(delta):
 	charBody.move_and_slide()
 	
+func _physics_process(delta):
+	isOnLeftWall = wall_check(Vector2.LEFT)
+	isOnRightWall = wall_check(Vector2.RIGHT)
+	
+func wall_check(wallDirection : Vector2) -> bool:
+	var raycastResult = Physics2D.linecast(self, 
+		global_position,
+		global_position + wallDirection.normalized() * wallDistance,
+		0xFFFFFFFF,
+		[charBody])
+
+	return not raycastResult.is_empty()
+	
 func _can_transition_to(stateName) -> bool: 
-	if stateName == \"Air\":
-		return not charBody.is_on_wall()
-	elif stateName == \"Ground\":
-		return charBody.is_on_floor()
+	match stateName:
+		\"Air\":
+			return not is_hug_wall()
+			
 	return false;
+	
+func is_hug_wall() -> bool:
+	return \\
+		Input.is_action_pressed(\"move_left\") && isOnLeftWall or \\
+		Input.is_action_pressed(\"move_right\") && isOnRightWall
+	
+func _draw():
+	draw_line(Vector2(-wallDistance, 0), Vector2(wallDistance, 0), Color.RED)
 	
 "
 
@@ -159,7 +189,7 @@ size = Vector2(1040, 38)
 [node name="Node2D" type="Node2D"]
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
-position = Vector2(728, 192)
+position = Vector2(100, -136)
 wall_min_slide_angle = 0.506145
 script = ExtResource("1_jtk1t")
 
@@ -167,34 +197,37 @@ script = ExtResource("1_jtk1t")
 shape = SubResource("CapsuleShape2D_lsufn")
 metadata/_edit_lock_ = true
 
-[node name="StateMachine" type="Node" parent="CharacterBody2D"]
+[node name="StateMachine" type="Node2D" parent="CharacterBody2D"]
 script = SubResource("GDScript_152o8")
 default_state_name = "WallSlide"
 
-[node name="None" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="None" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_74t8p")
 
-[node name="Ground" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="Ground" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_svocx")
 
-[node name="Jump" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="Jump" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_s487l")
 
-[node name="Jump2" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="Jump2" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_bg5aa")
 
-[node name="Air" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="Air" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_r6d7i")
 gravity = 5000.0
 
-[node name="Air2" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="Air2" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_o2lqo")
 
-[node name="WallSlide" type="Node" parent="CharacterBody2D/StateMachine"]
+[node name="WallSlide" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_l231q")
 
+[node name="WallJump" type="Node2D" parent="CharacterBody2D/StateMachine"]
+script = ExtResource("2_u4jb4")
+
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
-position = Vector2(604, 637)
+position = Vector2(-24, 309)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
 position = Vector2(0, -23)
@@ -202,7 +235,7 @@ shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
 
 [node name="StaticBody2D2" type="StaticBody2D" parent="."]
-position = Vector2(904, 264)
+position = Vector2(276, -64)
 rotation = -1.57079
 scale = Vector2(0.64, 1)
 
@@ -210,3 +243,15 @@ scale = Vector2(0.64, 1)
 position = Vector2(0, -23)
 shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
+
+[node name="StaticBody2D3" type="StaticBody2D" parent="."]
+position = Vector2(-432, -56)
+rotation = -1.57079
+scale = Vector2(0.64, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D3"]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_v3ixk")
+metadata/_edit_lock_ = true
+
+[node name="Camera2D" type="Camera2D" parent="."]
