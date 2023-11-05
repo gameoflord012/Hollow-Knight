@@ -23,7 +23,6 @@ func _state_physics_process(delta):
 func _can_transition_to(state_name) -> bool:
 	match state_name:
 		"Air":
-			print(jumpTimer, " ", jumpDuration, " ", jumpTimer > jumpDuration)
 			return jumpTimer > jumpDuration
 		"WallSlide":
 			return wallJumpDirection == wallSlide.get_wall_axis()

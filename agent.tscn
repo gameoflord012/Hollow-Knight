@@ -141,12 +141,16 @@ func _can_transition_to(stateName) -> bool:
 script/source = "extends StateBase
 
 @export var fallingVelocity : float = 200
+@export var wallDistance : float = 100
+@export var releaseWallDuration := 0.05
+
 var charBody : CharacterBody2D 
-var wallDistance : float = 100
 
 var isOnWall := false
 var isOnLeftWall := false
 var isOnRightWall := false
+
+var releaseWallTimer = 0
 
 func _ready(): 
 	charBody = stateMachine.characterBody2D
@@ -160,6 +164,11 @@ func _state_physics_process(delta):
 func _physics_process(delta):
 	isOnLeftWall = wall_check(Vector2.LEFT)
 	isOnRightWall = wall_check(Vector2.RIGHT)
+	
+	if not is_release_wall():
+		releaseWallTimer = 0
+	else:
+		releaseWallTimer += delta
 	
 func wall_check(wallDirection : Vector2) -> bool:
 	var raycastResult = Physics2D.linecast(self, 
@@ -188,7 +197,7 @@ func get_wall_axis():
 func _can_transition_to(stateName) -> bool: 
 	match stateName:
 		\"Air\":
-			return is_release_wall()
+			return releaseWallTimer > releaseWallDuration
 			
 		\"Ground\":
 			return charBody.is_on_floor()
@@ -219,7 +228,7 @@ metadata/_edit_lock_ = true
 
 [node name="StateMachine" type="Node2D" parent="CharacterBody2D"]
 script = SubResource("GDScript_152o8")
-default_state_name = "WallSlide"
+default_state_name = "Air"
 
 [node name="None" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_74t8p")
@@ -236,16 +245,26 @@ script = SubResource("GDScript_bg5aa")
 [node name="Air" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_r6d7i")
 gravity = 5000.0
-uAirDrag = 5
+speedX = 700.0
+uAirDrag = 14
 
 [node name="Air2" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_o2lqo")
 
 [node name="WallSlide" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_l231q")
+fallingVelocity = 70.0
+wallDistance = 40.0
+releaseWallDuration = 0.0
 
 [node name="WallJump" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = ExtResource("2_u4jb4")
+jumpVelocity = Vector2(900, 350)
+
+[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+position_smoothing_enabled = true
+drag_horizontal_enabled = true
+drag_left_margin = 0.1
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 position = Vector2(-24, 309)
@@ -274,5 +293,3 @@ scale = Vector2(0.64, 1)
 position = Vector2(0, -23)
 shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
-
-[node name="Camera2D" type="Camera2D" parent="."]
