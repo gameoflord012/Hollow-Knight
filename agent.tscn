@@ -189,10 +189,10 @@ func is_release_wall() -> bool:
 		Input.is_action_pressed(\"move_left\") and isOnRightWall or \\
 		Input.is_action_pressed(\"move_right\") and isOnLeftWall
 		
-func get_wall_axis():
+func get_wall_axis() -> int:
 	if isOnLeftWall: return -1
 	elif isOnRightWall: return 1
-	return
+	return 0
 		
 func _can_transition_to(stateName) -> bool: 
 	match stateName:
@@ -218,7 +218,7 @@ size = Vector2(1040, 38)
 [node name="Node2D" type="Node2D"]
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="."]
-position = Vector2(160, -128)
+position = Vector2(-112, -144)
 wall_min_slide_angle = 0.506145
 script = ExtResource("1_jtk1t")
 
@@ -252,6 +252,7 @@ uAirDrag = 14
 script = SubResource("GDScript_o2lqo")
 
 [node name="WallSlide" type="Node2D" parent="CharacterBody2D/StateMachine"]
+scale = Vector2(1.02149, 1)
 script = SubResource("GDScript_l231q")
 fallingVelocity = 70.0
 wallDistance = 40.0
@@ -259,37 +260,69 @@ releaseWallDuration = 0.0
 
 [node name="WallJump" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = ExtResource("2_u4jb4")
-jumpVelocity = Vector2(900, 350)
+jumpVelocity = Vector2(900, 500)
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
 position_smoothing_enabled = true
 drag_horizontal_enabled = true
 drag_left_margin = 0.1
 
-[node name="StaticBody2D" type="StaticBody2D" parent="."]
+[node name="level" type="Node2D" parent="."]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="level"]
 position = Vector2(-24, 309)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D"]
 position = Vector2(0, -23)
 shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
 
-[node name="StaticBody2D2" type="StaticBody2D" parent="."]
-position = Vector2(276, -64)
+[node name="StaticBody2D2" type="StaticBody2D" parent="level"]
+position = Vector2(48, -40)
 rotation = -1.57079
 scale = Vector2(0.64, 1)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D2"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D2"]
 position = Vector2(0, -23)
 shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
 
-[node name="StaticBody2D3" type="StaticBody2D" parent="."]
-position = Vector2(-256, -16)
+[node name="StaticBody2D3" type="StaticBody2D" parent="level"]
+position = Vector2(-328, -328)
+rotation = -1.57079
+scale = Vector2(1.28, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D3"]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_v3ixk")
+metadata/_edit_lock_ = true
+
+[node name="StaticBody2D5" type="StaticBody2D" parent="level"]
+position = Vector2(-136, -648)
 rotation = -1.57079
 scale = Vector2(0.64, 1)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D3"]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D5"]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_v3ixk")
+metadata/_edit_lock_ = true
+
+[node name="StaticBody2D6" type="StaticBody2D" parent="level"]
+position = Vector2(72, -344)
+rotation = -1.57079
+scale = Vector2(0.0399988, 6)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D6"]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_v3ixk")
+metadata/_edit_lock_ = true
+
+[node name="StaticBody2D4" type="StaticBody2D" parent="level"]
+position = Vector2(704, 208)
+rotation = -1.57079
+scale = Vector2(0.177169, 7.12706)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D4"]
 position = Vector2(0, -23)
 shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
