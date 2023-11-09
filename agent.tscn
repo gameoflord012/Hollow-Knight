@@ -1,7 +1,6 @@
 [gd_scene load_steps=13 format=3 uid="uid://camdrlaxyj4rd"]
 
 [ext_resource type="Script" path="res://Agent.gd" id="1_jtk1t"]
-[ext_resource type="Script" path="res://WallJump.gd" id="2_u4jb4"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lsufn"]
 radius = 36.0
@@ -159,11 +158,19 @@ func _state_enter():
 	charBody.velocity.y = fallingVelocity
 	
 func _state_physics_process(delta):
+	if charBody.get_last_slide_collision():
+		charBody.velocity.x = 0
+	else:
+		charBody.velocity.x = get_wall_axis() * fallingVelocity
+		
+	print(charBody.velocity)	
+		
 	charBody.move_and_slide()
 	
 func _physics_process(delta):
-	isOnLeftWall = wall_check(Vector2.LEFT)
-	isOnRightWall = wall_check(Vector2.RIGHT)
+	if stateMachine.currentState != self:
+		isOnLeftWall = wall_check(Vector2.LEFT)
+		isOnRightWall = wall_check(Vector2.RIGHT)
 	
 	if not is_release_wall():
 		releaseWallTimer = 0
@@ -210,6 +217,39 @@ func _can_transition_to(stateName) -> bool:
 func _draw():
 	draw_line(Vector2(-wallDistance, 0), Vector2(wallDistance, 0), Color.RED)
 	
+"
+
+[sub_resource type="GDScript" id="GDScript_rqeow"]
+script/source = "extends StateBase
+
+@export var jumpVelocity : Vector2 = Vector2(1000, 1000)
+@export var jumpDuration = 0.1
+
+@onready var charBody : CharacterBody2D = stateMachine.characterBody2D
+@onready var wallSlide = $\"../WallSlide\"
+
+var jumpTimer = 0
+var wallJumpDirection = 0
+
+func _state_enter():
+	wallJumpDirection = -wallSlide.get_wall_axis()
+	charBody.velocity.x = wallJumpDirection * jumpVelocity.x
+	charBody.velocity.y = -abs(jumpVelocity.y)
+	
+	jumpTimer = 0
+	
+func _state_physics_process(delta):
+	jumpTimer += delta
+	charBody.move_and_slide()
+	
+func _can_transition_to(state_name) -> bool:
+	match state_name:
+		\"Air\":
+			return jumpTimer > jumpDuration
+		\"WallSlide\":
+			return wallJumpDirection == wallSlide.get_wall_axis()
+			
+	return false
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v3ixk"]
@@ -259,8 +299,7 @@ wallDistance = 40.0
 releaseWallDuration = 0.0
 
 [node name="WallJump" type="Node2D" parent="CharacterBody2D/StateMachine"]
-script = ExtResource("2_u4jb4")
-jumpVelocity = Vector2(900, 500)
+script = SubResource("GDScript_rqeow")
 
 [node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
 position_smoothing_enabled = true
