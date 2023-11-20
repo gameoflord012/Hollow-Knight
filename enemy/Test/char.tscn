@@ -1,0 +1,29 @@
+[gd_scene load_steps=8 format=3 uid="uid://e54svek8n2fk"]
+
+[ext_resource type="Script" path="res://enemy/BehaviorTree/BehaviorTreeRoot.gd" id="1_76e6c"]
+[ext_resource type="Script" path="res://enemy/Test/char.gd" id="1_ou3wf"]
+[ext_resource type="Texture2D" uid="uid://bdvnnahmqpia4" path="res://enemy/BehaviorTree/icon.svg" id="1_rs88q"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Selector.gd" id="2_po4gb"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Sequence.gd" id="3_k7kfw"]
+[ext_resource type="Script" path="res://enemy/Test/goToMousePos.gd" id="4_ieqqp"]
+[ext_resource type="Script" path="res://enemy/Test/isMouseNearby.gd" id="7_3pri3"]
+
+[node name="char" type="Sprite2D"]
+scale = Vector2(0.390625, 0.390625)
+texture = ExtResource("1_rs88q")
+script = ExtResource("1_ou3wf")
+
+[node name="BehaviorTreeRoot" type="Node" parent="."]
+script = ExtResource("1_76e6c")
+
+[node name="main" type="Node" parent="BehaviorTreeRoot"]
+script = ExtResource("2_po4gb")
+
+[node name="followMouse" type="Node" parent="BehaviorTreeRoot/main"]
+script = ExtResource("3_k7kfw")
+
+[node name="isMouseNearby" type="Node" parent="BehaviorTreeRoot/main/followMouse"]
+script = ExtResource("7_3pri3")
+
+[node name="goToMousePos" type="Node" parent="BehaviorTreeRoot/main/followMouse"]
+script = ExtResource("4_ieqqp")
