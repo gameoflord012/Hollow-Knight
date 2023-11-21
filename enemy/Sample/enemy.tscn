@@ -48,7 +48,7 @@ func tick(actor, blackboard):
 		wander_duration = randf_range(2, 4)
 		wander_direction = Vector2(randi_range(-1, 1), 0)
 	
-	if is_blocked(actor, wander_direction):
+	if is_blocked(actor, wander_direction) or is_clift(actor, wander_direction):
 		wander_duration = -1
 		wander_counter = 0
 		return FAILURE
@@ -71,8 +71,18 @@ func is_blocked(actor, direction) -> bool:
 		
 	return true
 
+func is_clift(actor, direction) -> bool:
+	var platforms = Physics2D.linecast(actor, actor.position + direction * 30, actor.position + direction * 30 + Vector2(0, 30), 1, [])
+	
+	if platforms.size() == 0:
+		return true
+		
+	return false
+	
 func _draw():
 	draw_line(Vector2(-30, 0), Vector2(30, 0), Color.YELLOW)
+	draw_line(Vector2(-30, 0), Vector2(-30, 30), Color.RED)
+	draw_line(Vector2(30, 0), Vector2(30, 30), Color.RED)
 	
 "
 

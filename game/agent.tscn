@@ -259,7 +259,7 @@ size = Vector2(1040, 38)
 [node name="Node2D" type="Node2D"]
 
 [node name="CharacterBody2D" type="CharacterBody2D" parent="." groups=["Player"]]
-position = Vector2(-112, -144)
+position = Vector2(218, -70)
 wall_min_slide_angle = 0.506145
 script = ExtResource("1_1ekgd")
 
@@ -369,4 +369,4 @@ shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
 
 [node name="Enemy" parent="." instance=ExtResource("2_hmo1x")]
-position = Vector2(137, 164)
+position = Vector2(463, 14)
