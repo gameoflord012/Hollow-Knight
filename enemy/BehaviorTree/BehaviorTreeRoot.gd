@@ -13,6 +13,9 @@ func _ready():
 		print("Behavior Tree error: Root should have one child")
 		disable()
 		return
+		
+	var player = get_tree().get_first_node_in_group("Player")
+	blackboard.b_set("player", player)
 
 func _physics_process(delta):
 	if not enabled:
