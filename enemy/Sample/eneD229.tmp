@@ -1,0 +1,62 @@
+[gd_scene load_steps=9 format=3 uid="uid://by18bfq07s8m7"]
+
+[ext_resource type="Script" path="res://enemy/BehaviorTree/BehaviorTreeRoot.gd" id="1_1vbyk"]
+[ext_resource type="Script" path="res://enemy/Sample/enemy.gd" id="1_05tvl"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Sequence.gd" id="2_od4yp"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/Leaves/Action.gd" id="3_if5iy"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Selector.gd" id="4_hxrqu"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_7cvo5"]
+radius = 15.0
+height = 46.0
+
+[sub_resource type="GDScript" id="GDScript_dhn0e"]
+script/source = "extends ConditionLeaf
+
+@export var detect_range : float = 300
+
+func tick(actor, blackboard):
+	var target = get_tree().get_first_node_in_group(\"Player\")
+	
+	if actor.position.distance_to(target.position) < detect_range:
+		return SUCCESS
+		
+	return FAILURE
+"
+
+[sub_resource type="GDScript" id="GDScript_y6n4o"]
+script/source = "extends ActionLeaf
+
+func tick(actor, blackboard):
+	pass
+"
+
+[node name="Enemy" type="RigidBody2D"]
+script = ExtResource("1_05tvl")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_7cvo5")
+
+[node name="BehaviorTreeRoot" type="Node" parent="."]
+script = ExtResource("1_1vbyk")
+
+[node name="Attack" type="Node" parent="BehaviorTreeRoot"]
+script = ExtResource("2_od4yp")
+
+[node name="isTargetInRange" type="Node" parent="BehaviorTreeRoot/Attack"]
+script = SubResource("GDScript_dhn0e")
+
+[node name="followPlayer" type="Node" parent="BehaviorTreeRoot/Attack"]
+script = ExtResource("3_if5iy")
+
+[node name="attackPlayer" type="Node" parent="BehaviorTreeRoot/Attack"]
+script = ExtResource("3_if5iy")
+
+[node name="Wander" type="Node" parent="BehaviorTreeRoot"]
+script = ExtResource("4_hxrqu")
+
+[node name="moveForward" type="Node" parent="BehaviorTreeRoot/Wander"]
+script = SubResource("GDScript_y6n4o")
+
+[node name="turnAround" type="Node" parent="BehaviorTreeRoot/Wander"]
+script = ExtResource("3_if5iy")
