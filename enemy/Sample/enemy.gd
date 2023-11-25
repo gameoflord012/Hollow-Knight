@@ -10,9 +10,9 @@ func _physics_process(delta):
 func move_with_speed(speed):
 	self.velocity.x = move_direction.x * speed
 	
-func move_towards_position(target_position: Vector2, delta: float):
-	self.position += self.position.direction_to(target_position) * delta * 100
+func move_towards_position(target_position: Vector2, speed : float, delta: float):
+	self.position += self.position.direction_to(target_position) * speed * delta
  
-func move_horizontal_direction(direction_x: int, delta: float):
-	self.position.x += direction_x * delta * 100
+func move_horizontal_direction(direction_x: int, speed : float, delta: float):
+	self.position.x += direction_x * speed * delta
  

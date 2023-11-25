@@ -1,9 +1,9 @@
-[gd_scene load_steps=10 format=3 uid="uid://c3s0566m405ln"]
+[gd_scene load_steps=9 format=3 uid="uid://il1pbqjy6brj"]
 
-[ext_resource type="Script" path="res://enemy/BehaviorTree/BehaviorTreeRoot.gd" id="1_1vbyk"]
-[ext_resource type="Script" path="res://enemy/Sample/Enemy.gd" id="1_3uxr4"]
-[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Sequence.gd" id="2_od4yp"]
-[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Selector.gd" id="4_hxrqu"]
+[ext_resource type="Script" path="res://enemy/Sample/Enemy.gd" id="1_ql68l"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/BehaviorTreeRoot.gd" id="2_i6t0x"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Selector.gd" id="3_cmh36"]
+[ext_resource type="Script" path="res://enemy/BehaviorTree/Composites/Sequence.gd" id="4_n8ai3"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_7cvo5"]
 radius = 15.0
@@ -12,33 +12,53 @@ height = 46.0
 [sub_resource type="GDScript" id="GDScript_dhn0e"]
 script/source = "extends ConditionLeaf
 
-@export var detect_range : float = 200
+@export var detect_range : float = 300
 
 func tick(actor, blackboard):
 	var target = blackboard.b_get(\"player\")
 	if target == null:
 		return FAILURE
 	
-	if actor.position.distance_to(target.position) < detect_range:
+	if blackboard.b_get(\"target_lock\") == true:
 		return SUCCESS
 		
+	if abs(actor.position.x - target.position.x) < detect_range:
+		blackboard.b_set(\"target_pos\", target.position)
+		blackboard.b_set(\"target_lock\", true)
+		return SUCCESS
+	
 	return FAILURE
 "
 
-[sub_resource type="GDScript" id="GDScript_puocv"]
+[sub_resource type="GDScript" id="GDScript_nr1gx"]
 script/source = "extends ActionLeaf
 
-@export var attack_range : float = 100
+var wait_duration : float = 0.5
+var wait_counter : float = 0
+var prepared : bool = false
+var strike_speed : float = 250
+
+var target_pos : Vector2
 
 func tick(actor, blackboard):
-	var target = blackboard.b_get(\"player\")
-	var direction_x = (target.position.x - actor.position.x) / abs(target.position.x - actor.position.x)
-	if is_blocked(actor, Vector2(direction_x, 0)):
+	if prepared == false:
+		wait_counter += blackboard.b_get(\"delta\")
+		
+		if wait_counter >= wait_duration:
+			wait_counter = 0
+			prepared = true
+		
+		return RUNNING
+	
+	target_pos = blackboard.b_get(\"target_pos\")
+	
+	if is_blocked(actor, actor.position.direction_to(target_pos)) == true:
 		return FAILURE
 		
-	actor.move_horizontal_direction(direction_x, 150, blackboard.b_get(\"delta\"))
-	
-	if actor.position.distance_to(target.position) < attack_range:
+	actor.move_horizontal_direction((target_pos.x - actor.position.x) / abs(target_pos.x - actor.position.x), strike_speed, blackboard.b_get(\"delta\"))
+	if abs(actor.position.x - target_pos.x) < 5:
+		blackboard.b_set(\"target_lock\", false)
+		prepared = false
 		return SUCCESS
 		
 	return RUNNING
@@ -50,19 +70,6 @@ func is_blocked(actor, direction) -> bool:
 		return false
 		
 	return true
-
-func _draw():
-	var attack_range_color : Color = Color.RED
-	attack_range_color.a = 0.1
-	draw_circle(Vector2(0, 0), attack_range, attack_range_color)
-"
-
-[sub_resource type="GDScript" id="GDScript_nr1gx"]
-script/source = "extends ActionLeaf
-
-func tick(actor, blackboard):
-	print(\"Attacking\")
-	return SUCCESS
 "
 
 [sub_resource type="GDScript" id="GDScript_y6n4o"]
@@ -117,32 +124,29 @@ func _draw():
 	
 "
 
-[node name="Enemy" type="CharacterBody2D"]
-script = ExtResource("1_3uxr4")
+[node name="Striker" type="CharacterBody2D"]
+script = ExtResource("1_ql68l")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_7cvo5")
 
 [node name="BehaviorTreeRoot" type="Node2D" parent="."]
-script = ExtResource("1_1vbyk")
+script = ExtResource("2_i6t0x")
 
 [node name="SelectorComposite" type="Node2D" parent="BehaviorTreeRoot"]
-script = ExtResource("4_hxrqu")
+script = ExtResource("3_cmh36")
 
 [node name="Attack" type="Node2D" parent="BehaviorTreeRoot/SelectorComposite"]
-script = ExtResource("2_od4yp")
+script = ExtResource("4_n8ai3")
 
 [node name="isTargetInRange" type="Node2D" parent="BehaviorTreeRoot/SelectorComposite/Attack"]
 script = SubResource("GDScript_dhn0e")
-
-[node name="followPlayer" type="Node2D" parent="BehaviorTreeRoot/SelectorComposite/Attack"]
-script = SubResource("GDScript_puocv")
 
 [node name="attackPlayer" type="Node2D" parent="BehaviorTreeRoot/SelectorComposite/Attack"]
 script = SubResource("GDScript_nr1gx")
 
 [node name="Wander" type="Node2D" parent="BehaviorTreeRoot/SelectorComposite"]
-script = ExtResource("4_hxrqu")
+script = ExtResource("3_cmh36")
 
 [node name="wander" type="Node2D" parent="BehaviorTreeRoot/SelectorComposite/Wander"]
 script = SubResource("GDScript_y6n4o")
