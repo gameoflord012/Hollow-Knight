@@ -1,5 +1,3 @@
-extends AStar2D
-
 var id_to_grid : Dictionary
 
 func _compute_cost(from_id, to_id):
