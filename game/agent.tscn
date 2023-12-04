@@ -1,6 +1,18 @@
-[gd_scene load_steps=13 format=3 uid="uid://camdrlaxyj4rd"]
+[gd_scene load_steps=27 format=3 uid="uid://camdrlaxyj4rd"]
 
-[ext_resource type="Script" path="res://game/Agent.gd" id="1_1ekgd"]
+[ext_resource type="Texture2D" uid="uid://c5kfywvhr1eoh" path="res://art/idle_1.png" id="1_jw0v1"]
+[ext_resource type="Texture2D" uid="uid://bw66v8smoe83l" path="res://art/idle_2.png" id="2_tsn47"]
+[ext_resource type="Texture2D" uid="uid://627sajfm36x1" path="res://art/idle_3.png" id="3_galjo"]
+[ext_resource type="Texture2D" uid="uid://dimihhn5xyen0" path="res://art/idle_4.png" id="4_texdi"]
+[ext_resource type="Texture2D" uid="uid://pmvbpgpk2kro" path="res://art/run_1.png" id="5_ar4ns"]
+[ext_resource type="Texture2D" uid="uid://ck63qv7sqr4mv" path="res://art/run_2.png" id="6_rupqm"]
+[ext_resource type="Texture2D" uid="uid://cvd1c0cc2tkvv" path="res://art/run_3.png" id="7_jxyec"]
+[ext_resource type="Texture2D" uid="uid://drspgrclgbvpb" path="res://art/run_4.png" id="8_3qnr1"]
+[ext_resource type="Texture2D" uid="uid://wstvlnly1r7g" path="res://art/run_5.png" id="9_b2bm5"]
+[ext_resource type="Texture2D" uid="uid://b72sgok3w7lo4" path="res://art/run_6.png" id="10_f0co5"]
+[ext_resource type="Texture2D" uid="uid://hmprowvxh23d" path="res://art/run_7.png" id="11_iaqg5"]
+[ext_resource type="Texture2D" uid="uid://dvy7cp2gqj64u" path="res://art/run_8.png" id="12_rimiw"]
+[ext_resource type="Texture2D" uid="uid://3auu1qv1fwdx" path="res://art/run_9.png" id="13_cowhi"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_lsufn"]
 radius = 36.0
@@ -252,17 +264,87 @@ func _can_transition_to(state_name) -> bool:
 	return false
 "
 
+[sub_resource type="SpriteFrames" id="SpriteFrames_4gn8x"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_jw0v1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_tsn47")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_galjo")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_texdi")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 7.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_ar4ns")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_rupqm")
+}, {
+"duration": 1.0,
+"texture": ExtResource("7_jxyec")
+}, {
+"duration": 1.0,
+"texture": ExtResource("8_3qnr1")
+}, {
+"duration": 1.0,
+"texture": ExtResource("9_b2bm5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("10_f0co5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("11_iaqg5")
+}, {
+"duration": 1.0,
+"texture": ExtResource("12_rimiw")
+}, {
+"duration": 1.0,
+"texture": ExtResource("13_cowhi")
+}],
+"loop": true,
+"name": &"running",
+"speed": 10.0
+}]
+
+[sub_resource type="GDScript" id="GDScript_lekn1"]
+script/source = "extends AnimatedSprite2D
+
+@onready var charbody := get_tree().get_first_node_in_group(\"CharacterBody2D\")
+
+func _process(delta):
+	if charbody.velocity.x == 0:
+		play(\"idle\")
+	else:
+		play(\"running\")
+		
+	if charbody.velocity.x < 0:
+		set_scale(Vector2(-1, 1))
+	else:
+		set_scale(Vector2(1, 1))
+	
+	
+"
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_v3ixk"]
 size = Vector2(1040, 38)
 
 [node name="Node2D" type="Node2D"]
 
-[node name="CharacterBody2D" type="CharacterBody2D" parent="."]
-position = Vector2(-112, -144)
+[node name="CharacterBody2D" type="CharacterBody2D" parent="." groups=["CharacterBody2D"]]
+position = Vector2(520, -24)
 wall_min_slide_angle = 0.506145
-script = ExtResource("1_1ekgd")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="CharacterBody2D"]
+[node name="CharacterCollision" type="CollisionShape2D" parent="CharacterBody2D"]
 shape = SubResource("CapsuleShape2D_lsufn")
 metadata/_edit_lock_ = true
 
@@ -301,10 +383,17 @@ releaseWallDuration = 0.0
 [node name="WallJump" type="Node2D" parent="CharacterBody2D/StateMachine"]
 script = SubResource("GDScript_rqeow")
 
-[node name="Camera2D" type="Camera2D" parent="CharacterBody2D"]
+[node name="FollowCamera" type="Camera2D" parent="CharacterBody2D"]
+zoom = Vector2(2, 2)
 position_smoothing_enabled = true
 drag_horizontal_enabled = true
 drag_left_margin = 0.1
+
+[node name="Animation" type="AnimatedSprite2D" parent="CharacterBody2D"]
+sprite_frames = SubResource("SpriteFrames_4gn8x")
+animation = &"idle"
+frame_progress = 0.912907
+script = SubResource("GDScript_lekn1")
 
 [node name="level" type="Node2D" parent="."]
 
@@ -312,6 +401,15 @@ drag_left_margin = 0.1
 position = Vector2(-24, 309)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D"]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_v3ixk")
+metadata/_edit_lock_ = true
+
+[node name="StaticBody2D7" type="StaticBody2D" parent="level"]
+position = Vector2(1768, 304)
+scale = Vector2(2.88, 1)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="level/StaticBody2D7"]
 position = Vector2(0, -23)
 shape = SubResource("RectangleShape2D_v3ixk")
 metadata/_edit_lock_ = true
