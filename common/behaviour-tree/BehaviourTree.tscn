@@ -1,8 +1,8 @@
 [gd_scene load_steps=7 format=3 uid="uid://s6t22pjs0px8"]
 
-[ext_resource type="Script" path="res://common/ai/RepeatNode.gd" id="1_c2quc"]
-[ext_resource type="Script" path="res://common/ai/SequenceNode.gd" id="2_4e7eu"]
-[ext_resource type="Script" path="res://common/ai/WaitBehaviour.gd" id="3_2qsiq"]
+[ext_resource type="Script" path="res://common/behaviour-tree/RepeatNode.gd" id="1_lm13k"]
+[ext_resource type="Script" path="res://common/behaviour-tree/SequenceNode.gd" id="2_537xc"]
+[ext_resource type="Script" path="res://common/behaviour-tree/WaitBehaviour.gd" id="3_lbyvx"]
 
 [sub_resource type="GDScript" id="GDScript_sug0y"]
 script/source = "extends BehaviourNode
@@ -31,26 +31,27 @@ func _get_behaviour(data) -> BehaviourState:
 [node name="BehaviourTree" type="Node2D"]
 
 [node name="repeat" type="Node2D" parent="."]
-script = ExtResource("1_c2quc")
+script = ExtResource("1_lm13k")
 repeat_count = -1
+_start_on_ready = null
 
 [node name="BehaviourNode" type="Node2D" parent="repeat"]
 script = SubResource("GDScript_sug0y")
 
 [node name="sequence" type="Node2D" parent="."]
-script = ExtResource("2_4e7eu")
+script = ExtResource("2_537xc")
 _start_on_ready = true
 
 [node name="Attack 1" type="Node2D" parent="sequence"]
 script = SubResource("GDScript_ok24t")
 
 [node name="Wait2" type="Node2D" parent="sequence"]
-script = ExtResource("3_2qsiq")
+script = ExtResource("3_lbyvx")
 waitDuration = 2.0
 
 [node name="Attack 2" type="Node2D" parent="sequence"]
 script = SubResource("GDScript_yilem")
 
 [node name="Wait" type="Node2D" parent="sequence"]
-script = ExtResource("3_2qsiq")
+script = ExtResource("3_lbyvx")
 waitDuration = 1.5
